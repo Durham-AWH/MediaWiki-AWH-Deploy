@@ -2,9 +2,6 @@ trigger:
   branches:
     include:
     - main
-  paths:
-    include:
-    - demo-code
 
 variables:
   azureSubscription: 'svc-con-awh-01'
