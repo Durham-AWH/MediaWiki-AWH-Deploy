@@ -5,7 +5,7 @@ trigger:
 
 variables:
   azureSubscription: 'svc-con-awh-01'
-  webAppName: 'duuksarc-mediawiki01'
+  webAppName: 'duuksarcmediawiki01'
   vmImageName: 'ubuntu-latest'
   environmentName: 'dev'
   rootFolder: $(System.DefaultWorkingDirectory)
