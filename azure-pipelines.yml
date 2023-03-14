@@ -40,7 +40,8 @@ jobs:
       unzip -q dist.zip
       rm dist.zip
       
-      GLOBIGNORE=.; DIR=$(ls); 
+      GLOBIGNORE=".:.."; DIR=$(ls); 
+      shopt -u dotglob
       mv $DIR/* $DIR/.* .
       rmdir $DIR
 
