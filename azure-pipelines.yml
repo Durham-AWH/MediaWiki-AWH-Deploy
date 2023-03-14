@@ -41,7 +41,7 @@ jobs:
       rm dist.zip
       
       DIR=$(ls)
-      (cd $(ls); mv * .* ../)
+      (cd $(ls); mv * .* ../) || true
       rmdir $DIR
 
     displayName: Get MediaWiki Release
