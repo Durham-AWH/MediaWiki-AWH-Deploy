@@ -24,52 +24,52 @@ variables:
   zipDistribution: 'https://releases.wikimedia.org/mediawiki/1.39/mediawiki-1.39.2.zip'
 
 jobs:
-- deployment: Deployment
+- job: Deployment
   steps:
-    - script: |
+  - script: |
+      set -e
+      ls -lA
+      
+      mkdir -p dist
+      cd dist
+      
+      echo Downloading to "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
+      echo Retrieving "$(zipDistribution)..."
+      curl -L -o dist.zip "$(zipDistribution)"
+      unzip -q -j dist.zip
+
+    displayName: Get MediaWiki Release
+
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: '$(System.DefaultWorkingDirectory)/dist'
+      includeRootFolder: false
+      archiveType: "zip"
+      archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
+      replaceExistingArchive: true
+      displayName: "Archive Files"
+
+  - task: AzureRmWebAppDeployment@4
+    inputs:
+      ConnectionType: 'AzureRM'
+      appType: 'webAppLinux'
+      deployToSlotOrASE: true
+      SlotName: 'production'
+      WebAppName: '$(appName)'
+      ResourceGroupName: '$(appResourceGroupName)'
+      azureSubscription: '$(azureSubscription)'
+      RuntimeStack: '$(runtimeStack)'
+      packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      #AppSettings: '-DATA_ROOT $(DATA_ROOT)'
+      ScriptType: 'Inline Script'
+      InlineScript: |
         set -e
-        ls -lA
+        export WORKDIR=$(pwd)
+        echo "Working directory is ${WORKDIR}"
         
-        mkdir -p dist
-        cd dist
+        ls -lA | head
+        echo "$(ls -lA | wc -l) files total"
         
-        echo Downloading to "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
-        echo Retrieving "$(zipDistribution)..."
-        curl -L -o dist.zip "$(zipDistribution)"
-        unzip -q -j dist.zip
-
-      displayName: Get MediaWiki Release
-
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/dist'
-        includeRootFolder: false
-        archiveType: "zip"
-        archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
-        replaceExistingArchive: true
-        displayName: "Archive Files"
-
-    - task: AzureRmWebAppDeployment@4
-      inputs:
-        ConnectionType: 'AzureRM'
-        appType: 'webAppLinux'
-        deployToSlotOrASE: true
-        SlotName: 'production'
-        WebAppName: '$(appName)'
-        ResourceGroupName: '$(appResourceGroupName)'
-        azureSubscription: '$(azureSubscription)'
-        RuntimeStack: '$(runtimeStack)'
-        packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
-        #AppSettings: '-DATA_ROOT $(DATA_ROOT)'
-        ScriptType: 'Inline Script'
-        InlineScript: |
-          set -e
-          export WORKDIR=$(pwd)
-          echo "Working directory is ${WORKDIR}"
-          
-          ls -lA | head
-          echo "$(ls -lA | wc -l) files total"
-          
-          #ls -lA ${DATA_ROOT}
-          #touch ${DATA_ROOT}/test
+        #ls -lA ${DATA_ROOT}
+        #touch ${DATA_ROOT}/test
 
