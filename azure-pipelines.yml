@@ -19,7 +19,7 @@ resources:
 variables:
   azureSubscription: 'svc-con-awh-01'
   appName: 'duuksarcmediawiki01'
-  appResourceGroupName: 'du-uks-awh-arc-mediawiki01'
+  appResourceGroupName: 'du-uks-awh-arcmediawiki01'
   runtimeStack: 'PHP|7.4' # Update this value.
   zipDistribution: 'https://releases.wikimedia.org/mediawiki/1.39/mediawiki-1.39.2.zip'
 
