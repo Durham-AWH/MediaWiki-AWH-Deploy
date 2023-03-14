@@ -28,7 +28,6 @@ jobs:
   steps:
   - script: |
       set -e
-      shopt -s dotglob
       ls -lA
       
       mkdir -p dist
@@ -40,7 +39,10 @@ jobs:
       echo "Extracting folder..."
       unzip -q dist.zip
       rm dist.zip
-      DIR=$(ls); mv $DIR/* $DIR/[.]* . && rmdir $DIR
+      
+      GLOBIGNORE=.; DIR=$(ls); 
+      mv $DIR/* $DIR/.* .
+      rmdir $DIR
 
     displayName: Get MediaWiki Release
 
