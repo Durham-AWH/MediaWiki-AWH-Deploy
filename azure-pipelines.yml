@@ -40,10 +40,7 @@ jobs:
       unzip -q dist.zip
       rm dist.zip
       
-      DIR=$(ls)
-      GLOBIGNORE='.:*/.:*/..'
-      shopt -u dotglob
-      mv $DIR/* $DIR/.* .
+      (cd $(ls); mv * ../)
       rmdir $DIR
 
     displayName: Get MediaWiki Release
