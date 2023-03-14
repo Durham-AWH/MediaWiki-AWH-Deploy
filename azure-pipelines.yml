@@ -1,66 +1,75 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
 trigger:
-  branches:
-    include:
-    - main
+  - main
+
+pr: none
+
+pool:
+  name: Default
+  demands:
+    - Agent.Name -equals vmlsha1
+
+resources:
+  - repo: self
 
 variables:
   azureSubscription: 'svc-con-awh-01'
-  webAppName: 'duuksarcmediawiki01'
-  vmImageName: 'ubuntu-latest'
-  environmentName: 'dev'
-  rootFolder: $(System.DefaultWorkingDirectory)
+  appName: 'duuksarcmediawiki01'
+  appResourceGroupName: 'du-uks-awh-arc-mediawiki01'
+  runtimeStack: 'PHP|7.4' # Update this value.
+  zipDistribution: 'https://releases.wikimedia.org/mediawiki/1.39/mediawiki-1.39.2.zip'
 
-stages:
-- stage: Build
-  displayName: Build stage
-  variables:
-    phpVersion: '7.4'
-  jobs:
-  - job: BuildJob
-    pool:
-      vmImage: $(vmImageName)
-    steps:
+jobs:
+- deployment: Deployment
+  steps:
     - script: |
-        sudo update-alternatives --set php /usr/bin/php$(phpVersion)
-        sudo update-alternatives --set phar /usr/bin/phar$(phpVersion)
-        sudo update-alternatives --set phpdbg /usr/bin/phpdbg$(phpVersion)
-        sudo update-alternatives --set php-cgi /usr/bin/php-cgi$(phpVersion)
-        sudo update-alternatives --set phar.phar /usr/bin/phar.phar$(phpVersion)
-        php -version
-      workingDirectory: $(rootFolder)
-      displayName: 'Use PHP version $(phpVersion)'
+        set -e
+        ls -lA
+        
+        mkdir -p dist
+        cd dist
+        
+        echo Downloading to "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
+        echo Retrieving "$(zipDistribution)..."
+        curl -L -o dist.zip "$(zipDistribution)"
+        unzip -q -j dist.zip
+
+      displayName: Get MediaWiki Release
 
     - task: ArchiveFiles@2
-      displayName: 'Archive files'
       inputs:
-        rootFolderOrFile: '$(rootFolder)'
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/dist'
         includeRootFolder: false
-        archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        archiveType: "zip"
+        archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
         replaceExistingArchive: true
+        displayName: "Archive Files"
 
-    - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-      displayName: 'Upload package'
-      artifact: drop
-
-- stage: Deploy
-  displayName: 'Deploy Web App'
-  dependsOn: Build
-  condition: succeeded()
-  jobs:
-  - deployment: DeploymentJob
-    pool:
-      vmImage: $(vmImageName)
-    environment: $(environmentName)
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-          - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App'
-            inputs:
-              azureSubscription: $(azureSubscription)
-              appName: $(webAppName)
-              appType: webAppLinux
-              package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        appType: 'webAppLinux'
+        deployToSlotOrASE: true
+        SlotName: 'production'
+        WebAppName: '$(appName)'
+        ResourceGroupName: '$(appResourceGroupName)'
+        azureSubscription: '$(azureSubscription)'
+        RuntimeStack: '$(runtimeStack)'
+        packageForLinux: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+        #AppSettings: '-DATA_ROOT $(DATA_ROOT)'
+        ScriptType: 'Inline Script'
+        InlineScript: |
+          set -e
+          export WORKDIR=$(pwd)
+          echo "Working directory is ${WORKDIR}"
+          
+          ls -lA | head
+          echo "$(ls -lA | wc -l) files total"
+          
+          #ls -lA ${DATA_ROOT}
+          #touch ${DATA_ROOT}/test
 
