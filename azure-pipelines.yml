@@ -40,6 +40,7 @@ jobs:
       unzip -q dist.zip
       rm dist.zip
       
+      DIR=$(ls)
       (cd $(ls); mv * ../)
       rmdir $DIR
 
