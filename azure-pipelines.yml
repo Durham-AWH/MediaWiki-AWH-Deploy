@@ -35,19 +35,19 @@ jobs:
       
       echo Downloading to "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
       echo Retrieving "$(zipDistribution)..."
-      curl -L -o dist.zip "$(zipDistribution)"
+      curl --connect-timeout 20 -L -o dist.zip "$(zipDistribution)"
       unzip -q -j dist.zip
-
+      rm dist.zip
     displayName: Get MediaWiki Release
 
   - task: ArchiveFiles@2
+    displayName: "Archive Files"
     inputs:
       rootFolderOrFile: '$(System.DefaultWorkingDirectory)/dist'
       includeRootFolder: false
       archiveType: "zip"
       archiveFile: "$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip"
       replaceExistingArchive: true
-      displayName: "Archive Files"
 
   - task: AzureRmWebAppDeployment@4
     inputs:
